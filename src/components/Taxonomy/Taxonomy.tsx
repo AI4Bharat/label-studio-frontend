@@ -87,7 +87,6 @@ const Item: React.FC<any> = (props: RowProps) => {
     }
   };
   const onChangeGroupingVisibility = () => {
-    console.log(toggle);
     toggle().then(()=> 
       updateHeight(),
     );
@@ -158,14 +157,16 @@ const Dropdown = ({ show, flatten, items, dropdownRef }: DropdownProps) => {
 
   return (
     <div className={styles.taxonomy__dropdown} ref={dropdownRef} style={{ display: show ? "block" : "none" }}>
-      <input
-        autoComplete="off"
-        className={styles.taxonomy__search}
-        name="taxonomy__search"
-        placeholder="Search..."
-        onInput={onInput}
-        ref={inputRef}
-      />
+      <div className={styles.taxonomy__input_padding}>
+        <input
+          autoComplete="off"
+          className={styles.taxonomy__search}
+          name="taxonomy__search"
+          placeholder="Search..."
+          onInput={onInput}
+          ref={inputRef}
+        />
+      </div>
       <TreeStructure 
         items={list} 
         rowComponent={Item} 
