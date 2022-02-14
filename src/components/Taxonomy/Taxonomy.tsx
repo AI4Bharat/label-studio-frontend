@@ -63,58 +63,53 @@ function isSubArray(item: string[], parent: string[]) {
   return parent.every((n, i) => item[i] === n);
 }
 
-const Item: React.FC<any> = (props: RowProps) => {
-  const { data: { isLeaf, name, padding, path, updateHeight }, isOpen, style, toggle  } = props;
+const Item: React.FC<any> = ({ index, data, data:{ toggle }, style  }: RowProps | any) => {
+  const instance = data?.[index];
 
+  if (instance) {
+    const { isLeaf, name, padding, path, isOpen } = instance;
+    const [selected, setSelected] = useContext(TaxonomySelectedContext);
+    const isChildSelected = selected.some(current => isSubArray(current, path));
+    const checked = selected.some(current => isArraysEqual(current, path));
 
-  const [selected, setSelected] = useContext(TaxonomySelectedContext);
-  const isChildSelected = selected.some(current => isSubArray(current, path));
-  const checked = selected.some(current => isArraysEqual(current, path));
+    const { leafsOnly } = useContext(TaxonomyOptionsContext);
+    const prefix = !isLeaf ? (isOpen ? "-" : "+") : " ";
 
-  const { leafsOnly } = useContext(TaxonomyOptionsContext);
-  const prefix = !isLeaf ? (isOpen ? "-" : "+") : " ";
+    const setIndeterminate = useCallback(el => {
+      if (!el) return;
+      if (checked) el.indeterminate = false;
+      else el.indeterminate = isChildSelected;
+    }, [checked, isChildSelected]);
 
-  const setIndeterminate = useCallback(el => {
-    if (!el) return;
-    if (checked) el.indeterminate = false;
-    else el.indeterminate = isChildSelected;
-  }, [checked, isChildSelected]);
+    const onClick = () => leafsOnly && toggle(index);
+    
+    const onChangeGroupingVisibility = () => toggle(index);
 
-  const onClick = () => {
-    if(leafsOnly) {
-      toggle();
-      updateHeight();
-    }
-  };
-  const onChangeGroupingVisibility = () => {
-    toggle().then(()=> 
-      updateHeight(),
-    );
-  };
-
-  return (
-    <div className="item-tracker">
-      <div className={styles.taxonomy__item} style={{
-        ...style,
-        paddingLeft: padding,
-      }}>
-        <div className={styles.taxonomy__grouping} onClick={onChangeGroupingVisibility}>{prefix}</div>
-        <label
-          onClick={onClick}
-          title={name}
-          className={styles.taxonomy__collapsable}
-        >
-          <input
-            type="checkbox"
-            checked={checked}
-            ref={setIndeterminate}
-            onChange={e => setSelected(path, e.currentTarget.checked)}
-          />
-          {name}
-        </label>
+    return (
+      <div className="item-tracker">
+        <div className={styles.taxonomy__item} style={{
+          ...style,
+          paddingLeft: padding,
+        }}>
+          <div className={styles.taxonomy__grouping} onClick={onChangeGroupingVisibility}>{prefix}</div>
+          <label
+            onClick={onClick}
+            title={name}
+            className={styles.taxonomy__collapsable}
+          >
+            <input
+              type="checkbox"
+              checked={checked}
+              ref={setIndeterminate}
+              onChange={e => setSelected(path, e.currentTarget.checked)}
+            />
+            {name}
+          </label>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+  return null;
 };
 
 type DropdownProps = {
@@ -125,12 +120,12 @@ type DropdownProps = {
 }
 
 const itemDataReformater = (
-  { node: { children, label, depth, path }, nestingLevel } :
-  { node: RowItem, nestingLevel: number}) => (
+  { node: { children, label, depth, path }, nestingLevel, isOpen } :
+  { node: RowItem, nestingLevel: number, isOpen: boolean}) => (
   {
     id: `${label}-${depth}`,
     isLeaf: !children?.length,
-    isOpenByDefault: true,
+    isOpen,
     name: label,
     nestingLevel: depth,
     padding: nestingLevel * 20,
@@ -173,6 +168,7 @@ const Dropdown = ({ show, flatten, items, dropdownRef }: DropdownProps) => {
         flatten={search !== ""} 
         rowHeight={30}
         maxHeightPersentage={60}
+        defaultExpanded={true}
         transformationCallback={itemDataReformater}
       />
     </div>
